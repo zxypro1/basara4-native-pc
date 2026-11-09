@@ -73,6 +73,8 @@ VideoOutDriver::VideoOutDriver(u32 width, u32 height) {
     main_port.resolution.full_height = height;
     main_port.resolution.pane_width = width;
     main_port.resolution.pane_height = height;
+    internal_width = width;
+    internal_height = height;
     const char* separate = std::getenv("SPARTAN_PRESENT_THREAD");
     separate_swap = !(separate && separate[0] == '0');
     if (separate_swap) {
@@ -115,6 +117,22 @@ void VideoOutDriver::SwapThread(std::stop_token token) {
 }
 
 VideoOutDriver::~VideoOutDriver() = default;
+
+void VideoOutDriver::UpdateOutputResolution(u32 width, u32 height) {
+    if (width == 0 || height == 0) {
+        return;  // invalid resolution, keep current
+    }
+    
+    // Only update if the resolution actually changed
+    if (main_port.resolution.full_width != width || main_port.resolution.full_height != height) {
+        std::scoped_lock lock{main_port.vo_mutex};
+        main_port.resolution.full_width = width;
+        main_port.resolution.full_height = height;
+        main_port.resolution.pane_width = width;
+        main_port.resolution.pane_height = height;
+        LOG_INFO(Lib_VideoOut, "Updated output resolution to {}x{}", width, height);
+    }
+}
 
 int VideoOutDriver::Open(const ServiceThreadParams* params) {
     if (main_port.is_open) {
