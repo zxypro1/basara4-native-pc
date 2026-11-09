@@ -86,6 +86,7 @@ public:
     void Close(s32 handle);
 
     VideoOutPort* GetPort(s32 handle);
+    void UpdateOutputResolution(u32 width, u32 height);
 
     int RegisterBuffers(VideoOutPort* port, s32 startIndex, void* const* addresses, s32 bufferNum,
                         const BufferAttribute* attribute);
@@ -132,6 +133,8 @@ private:
     VideoOutPort main_port{};
     std::jthread present_thread;
     std::queue<Request> requests;
+    u32 internal_width{1920};   ///< internal rendering resolution width
+    u32 internal_height{1080};  ///< internal rendering resolution height
 };
 
 } // namespace Libraries::VideoOut

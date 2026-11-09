@@ -466,6 +466,12 @@ s32 PS4_SYSV_ABI sceVideoOutSetWindowModeMargins(s32 handle, s32 top, s32 bottom
     return ORBIS_OK;
 }
 
+void UpdateVideoOutResolution(u32 width, u32 height) {
+    if (driver) {
+        driver->UpdateOutputResolution(width, height);
+    }
+}
+
 void RegisterLib(Core::Loader::SymbolsResolver* sym) {
     driver = std::make_unique<VideoOutDriver>(EmulatorSettings.GetInternalScreenWidth(),
                                               EmulatorSettings.GetInternalScreenHeight());

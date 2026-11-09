@@ -8,6 +8,7 @@
 #include "common/singleton.h"
 #include "core/debug_state.h"
 #include "core/emulator_settings.h"
+#include "core/libraries/videoout/video_out.h"
 #include "sdl_window.h"
 #include "video_core/buffer_cache/buffer.h"
 #include "video_core/renderdoc.h"
@@ -320,6 +321,9 @@ Presenter::Presenter(Frontend::WindowSDL& window_, AmdGpu::Liverpool* liverpool_
     fsr_pass.Create(device, instance.GetAllocator(), num_images);
     pp_pass.Create(device, swapchain.GetSurfaceFormat().format);
     SpartanOverlay::Init(instance, swapchain.GetSurfaceFormat().format, num_images);
+
+    // Initialize VideoOut resolution with the initial window size
+    Libraries::VideoOut::UpdateVideoOutResolution(window.GetWidth(), window.GetHeight());
 
     const bool binary_cache = EmulatorSettingsImpl::Flag("SPARTAN_PIPELINE_BINARIES", true) &&
                               EmulatorSettings.IsPipelineCacheEnabled();
@@ -870,8 +874,12 @@ void Presenter::Present(Frame* frame, bool is_reusing_frame, bool is_game_frame)
 
     // Recreate the swapchain if the window was resized.
     swapchain.UpdateVsync();
-    if (window.GetWidth() != swapchain.GetWidth() || window.GetHeight() != swapchain.GetHeight()) {
-        swapchain.Recreate(window.GetWidth(), window.GetHeight());
+    const u32 window_width = window.GetWidth();
+    const u32 window_height = window.GetHeight();
+    if (window_width != swapchain.GetWidth() || window_height != swapchain.GetHeight()) {
+        swapchain.Recreate(window_width, window_height);
+        // Update VideoOut resolution so the game gets the correct display resolution
+        Libraries::VideoOut::UpdateVideoOutResolution(window_width, window_height);
     }
 
     if (!swapchain.AcquireNextImage()) {
